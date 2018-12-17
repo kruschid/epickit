@@ -1,0 +1,29 @@
+{
+  "name": "epickit",
+  "version": "0.1.0",
+  "description": "",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "TS_NODE_CACHE=false tape -r ts-node/register test/*.test.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kruschid/epickit.git"
+  },
+  "author": "Denis Kruschinski <denis.kruschinski@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kruschid/epickit/issues"
+  },
+  "homepage": "https://github.com/kruschid/epickit#readme",
+  "peerDependencies": {
+    "rxjs": "^6.3.3"
+  },
+  "devDependencies": {
+    "@types/tape": "^4.2.32",
+    "rxjs": "^6.3.3",
+    "tape": "^4.9.1",
+    "ts-node": "^7.0.1",
+    "typescript": "^3.2.2"
+  }
+}
