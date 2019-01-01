@@ -2,8 +2,9 @@
   "name": "epickit",
   "version": "0.1.0",
   "description": "",
-  "main": "src/index.ts",
+  "main": "build/index.js",
   "scripts": {
+    "build": "tsc",
     "test": "TS_NODE_CACHE=false tape -r ts-node/register test/*.test.ts"
   },
   "repository": {
