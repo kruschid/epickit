@@ -11,5 +11,5 @@
     "declaration": true
   },
   "compileOnSave": false,
-  "exclude": ["test"]
+  "exclude": ["test", "build"]
 }
