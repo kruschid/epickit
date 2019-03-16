@@ -51,4 +51,4 @@ exports.createEpicKit = function (initialState, epics) {
         dispatch: dispatch,
     };
 };
-//# sourceMappingURL=epicKit.js.map
+//# sourceMappingURL=epickit.js.map
