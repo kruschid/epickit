@@ -2,7 +2,7 @@ import { toArray, take, mergeMap, mapTo, takeUntil, distinctUntilChanged } from 
 import * as test from "tape";
 import { of, empty, interval, timer, merge} from "rxjs";
 
-import { createAction, createActionWithPayload, createEpicKit, IAction, Epic} from "../src/epicKit";
+import { createAction, createActionWithPayload, createEpicKit, IAction, Epic} from "../src/epickit";
 import { filterAction } from "../src/filterAction";
 
 interface IState {

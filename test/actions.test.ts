@@ -1,5 +1,5 @@
 import * as test from "tape";
-import { createAction, createActionWithPayload, Reducer, IAction } from "../src/epicKit";
+import { createAction, createActionWithPayload, Reducer, IAction } from "../src/epickit";
 
 test("should create actions", (t) => {
   t.plan(5);
