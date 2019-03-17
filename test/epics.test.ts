@@ -12,11 +12,13 @@ const initialState: IState = {
   counter: 1,
 };
 
+// nested example
 const INCREMENT = Symbol("INCREMENT");
-const increment: IAction<IState> = createAction<IState>(INCREMENT, (state) => ({
-  ...state, counter: state.counter + 1,
-}));
+const increment: IAction<IState> = createAction<IState>(INCREMENT, {
+  counter: (oldCounter) => oldCounter + 1,
+});
 
+// root reducer example
 const ADD_TO_COUNTER = Symbol("ADD_TO_COUNTER");
 const addToCounter = createActionWithPayload<IState, number>(ADD_TO_COUNTER, (s, p) => ({
   counter: s.counter + p,

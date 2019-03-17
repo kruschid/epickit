@@ -1,7 +1,12 @@
 import { BehaviorSubject, merge, Observable, Subject, queueScheduler} from "rxjs";
 import {ignoreElements, map, mergeAll, share, tap, withLatestFrom, observeOn} from "rxjs/operators";
 
-export type Reducer<S, P = any> = (state: S, payload: P) => S;
+export type RootReducer<S = any, P = any> = (state: S, payload: P) => S;
+export type NestedReducer<S = any, P = any> = {
+  [K in keyof S]?: S[K] extends object ? NestedReducer<S[K], P> | RootReducer<S[K], P> : RootReducer<S[K], P>
+};
+export type Reducer<S = any, P = any> = RootReducer<S, P> | NestedReducer<S, P>;
+
 export type Epic<S = any, A extends IAction = IAction<S>, R extends IAction = IAction<S>> = (
   action$: Observable<A>,
   state$: Observable<S>,
@@ -22,18 +27,27 @@ export interface IEpicKit<S> {
   dispatch: DispatchFn<S>;
 }
 
-export const createAction = <S = any>(
-  typeOrReducer: symbol | Reducer<S>,
-  reducer?: Reducer<S>,
+export const createAction = <
+  S = any,
+  T = symbol | Reducer<S>,
+  R = Reducer<S>
+>(
+  typeOrReducer: T,
+  reducer?: R,
 ): IAction<S> => ({
   type: typeof typeOrReducer === "symbol" ? typeOrReducer : undefined,
   reducer: typeof typeOrReducer === "function" ? typeOrReducer : reducer,
   payload: undefined,
 });
 
-export const createActionWithPayload = <S, P>(
-  typeOrReducer: symbol | Reducer<S, P>,
-  reducer?: Reducer<S, P>,
+export const createActionWithPayload = <
+  S,
+  P,
+  T = symbol | Reducer<S, P>,
+  R = Reducer<S, P>
+>(
+  typeOrReducer: T,
+  reducer?: R,
 ) => (
   payload: P,
 ): IAction<S, P> => ({
@@ -41,6 +55,23 @@ export const createActionWithPayload = <S, P>(
   reducer: typeof typeOrReducer === "function" ? typeOrReducer : reducer,
   payload,
 });
+
+const isRootReducer = <S, P>(
+  reducer: Reducer<S, P>,
+): reducer is RootReducer<S, P> =>
+  typeof reducer === "function";
+
+export const invokeReducer = <S extends {[x: string]: any}, P>(
+  state: S,
+  payload: P,
+  reducer: Reducer<S, P>,
+): S =>
+  isRootReducer(reducer)
+  ? reducer(state, payload)
+  : Object.keys(reducer).reduce<S>((acc, key) => ({
+    ...acc,
+    [key]: invokeReducer(state[key], payload, reducer[key]!),
+  }), state);
 
 export const reduceState = <S, A extends IAction<S>>(
   state$: Observable<S>,
@@ -51,7 +82,7 @@ export const reduceState = <S, A extends IAction<S>>(
     withLatestFrom(state$),
     map(([action, state]): [S, A] =>
       action.reducer
-        ? [action.reducer(state, action.payload), action]
+        ? [invokeReducer(state, action.payload, action.reducer), action]
         : [state, action],
     ),
   );

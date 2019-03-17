@@ -2,29 +2,37 @@ import * as test from "tape";
 import { createAction, createActionWithPayload, Reducer, IAction } from "../src/epickit";
 
 test("should create actions", (t) => {
-  t.plan(5);
+  t.plan(7);
 
-  const type = Symbol("type");
+  const TYPE = Symbol("type");
   const payload = "payload";
   const reducer: Reducer<string> = (state) => state.concat("123");
   const reducerWithPayload: Reducer<string, string> = (state, p) => state.concat(p);
 
   const cases: Array<[IAction, IAction]> = [[
     // only type
-    createAction<string>(type),
-    {type, payload: undefined, reducer: undefined},
+    createAction<string>(TYPE),
+    {type: TYPE, payload: undefined, reducer: undefined},
   ], [
-    // type and payload
-    createActionWithPayload<string, string>(type)(payload),
-    {type, payload, reducer: undefined},
+    // only type without explicit type
+    createAction(TYPE),
+    {type: TYPE, payload: undefined, reducer: undefined},
+  ], [
+    // only reducer
+    createAction(reducer),
+    {type: undefined, payload: undefined, reducer},
   ], [
     // type and reducer
-    createAction<string>(type, reducer),
-    {type, payload: undefined, reducer},
+    createAction(TYPE, reducer),
+    {type: TYPE, payload: undefined, reducer},
+  ], [
+    // type and payload
+    createActionWithPayload<string, string>(TYPE)(payload),
+    {type: TYPE, payload, reducer: undefined},
   ], [
     // type, payload and reducer
-    createActionWithPayload<string, string>(type, reducerWithPayload)(payload),
-    {type, payload, reducer: reducerWithPayload},
+    createActionWithPayload<string, string>(TYPE, reducerWithPayload)(payload),
+    {type: TYPE, payload, reducer: reducerWithPayload},
   ], [
     // payload and reducer
     createActionWithPayload<string, string>(reducerWithPayload)(payload),
