@@ -1,4 +1,15 @@
 "use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var rxjs_1 = require("rxjs");
 var operators_1 = require("rxjs/operators");
@@ -12,11 +23,22 @@ exports.createActionWithPayload = function (typeOrReducer, reducer) { return fun
     reducer: typeof typeOrReducer === "function" ? typeOrReducer : reducer,
     payload: payload,
 }); }; };
+var isRootReducer = function (reducer) {
+    return typeof reducer === "function";
+};
+exports.invokeReducer = function (state, payload, reducer) {
+    return isRootReducer(reducer)
+        ? reducer(state, payload)
+        : Object.keys(reducer).reduce(function (acc, key) {
+            var _a;
+            return (__assign({}, acc, (_a = {}, _a[key] = exports.invokeReducer(state[key], payload, reducer[key]), _a)));
+        }, state);
+};
 exports.reduceState = function (state$, action$) {
     return action$.pipe(operators_1.observeOn(rxjs_1.queueScheduler), operators_1.withLatestFrom(state$), operators_1.map(function (_a) {
         var action = _a[0], state = _a[1];
         return action.reducer
-            ? [action.reducer(state, action.payload), action]
+            ? [exports.invokeReducer(state, action.payload, action.reducer), action]
             : [state, action];
     }));
 };
