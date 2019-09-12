@@ -8,7 +8,7 @@
     "tape": "TS_NODE_CACHE=false tape -r ts-node/register",
     "test": "npm run tape test/*.test.ts",
     "coverage": "nyc -e .ts npm test",
-    "coverage-json": "nyc --reporter=json -e .ts npm test"
+    "coverage-report": "nyc --reporter=lcov -e .ts npm test"
   },
   "repository": {
     "type": "git",
