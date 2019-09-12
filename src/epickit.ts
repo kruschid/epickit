@@ -1,122 +1,68 @@
-import { BehaviorSubject, merge, Observable, Subject, queueScheduler} from "rxjs";
-import {ignoreElements, map, mergeAll, share, tap, withLatestFrom, observeOn} from "rxjs/operators";
+import { BehaviorSubject, merge, Observable, Subject, queueScheduler, empty } from "rxjs";
+import { ignoreElements, map, share, tap, withLatestFrom, observeOn } from "rxjs/operators";
+import { IAction } from "./action";
+import { invokeReducer } from "./reducer";
 
-export type RootReducer<S = any, P = any> = (state: S, payload: P) => S;
-export type NestedReducer<S = any, P = any> = {
-  [K in keyof S]?: S[K] extends object ? NestedReducer<S[K], P> | RootReducer<S[K], P> : RootReducer<S[K], P>
-};
-export type Reducer<S = any, P = any> = RootReducer<S, P> | NestedReducer<S, P>;
-
-export type Epic<S = any, A extends IAction = IAction<S>, R extends IAction = IAction<S>> = (
-  action$: Observable<A>,
+export type Epic<S> = (
+  action$: Observable<IAction<S, any>>,
   state$: Observable<S>,
-) => Observable<R>;
+) => Observable<IAction<S, any>>;
 
-export interface IAction <S = any, P = any> {
-  type?: symbol;
-  payload: P;
-  reducer?: Reducer<S, P>;
-}
-
-export type DispatchFn<S> = (action: IAction<S>) => void;
+export type DispatchFn<S> = <P>(action: IAction<S, P>) => void;
 
 export interface IEpicKit<S> {
   state$: BehaviorSubject<S>;
   action$: Subject<IAction<S>>;
-  epic$: Observable<[S, IAction<S>]>;
+  epic$: Observable<[IAction<S>, S]>;
   dispatch: DispatchFn<S>;
 }
 
-export const createAction = <
-  S = any,
-  T = symbol | Reducer<S>,
-  R = Reducer<S>
->(
-  typeOrReducer: T,
-  reducer?: R,
-): IAction<S> => ({
-  type: typeof typeOrReducer === "symbol" ? typeOrReducer : undefined,
-  reducer: typeof typeOrReducer === "function" ? typeOrReducer : reducer,
-  payload: undefined,
-});
-
-export const createActionWithPayload = <
-  S,
-  P,
-  T = symbol | Reducer<S, P>,
-  R = Reducer<S, P>
->(
-  typeOrReducer: T,
-  reducer?: R,
-) => (
-  payload: P,
-): IAction<S, P> => ({
-  type: typeof typeOrReducer === "symbol" ? typeOrReducer : undefined,
-  reducer: typeof typeOrReducer === "function" ? typeOrReducer : reducer,
-  payload,
-});
-
-const isRootReducer = <S, P>(
-  reducer: Reducer<S, P>,
-): reducer is RootReducer<S, P> =>
-  typeof reducer === "function";
-
-export const invokeReducer = <S extends {[x: string]: any}, P>(
-  state: S,
-  payload: P,
-  reducer: Reducer<S, P>,
-): S =>
-  isRootReducer(reducer)
-  ? reducer(state, payload)
-  : Object.keys(reducer).reduce<S>((acc, key) => ({
-    ...acc,
-    [key]: invokeReducer(state[key], payload, reducer[key]!),
-  }), state);
-
-export const reduceState = <S, A extends IAction<S>>(
+export const reduceState = <S>(
+  action$: Observable<IAction<S, any>>,
   state$: Observable<S>,
-  action$: Observable<A>,
-): Observable<[S, A]> =>
+): Observable<[IAction<S, any>, S]> =>
   action$.pipe(
     observeOn(queueScheduler),
     withLatestFrom(state$),
-    map(([action, state]): [S, A] =>
-      action.reducer
-        ? [invokeReducer(state, action.payload, action.reducer), action]
-        : [state, action],
+    map(([action, state]) =>
+      [action, invokeReducer(state, action.reducer, action.payload)]
     ),
   );
 
-export const connectEpics = <S>(
-  state$: Observable<S>,
-  action$: Observable<IAction<S>>,
-  epics: Array<Epic<S>>,
+export const combineEpics = <S>(
+  ...epics: Array<Epic<S>>
+): Epic<S> => (
+  action$,
+  state$,
 ): Observable<IAction<S>> =>
-  merge(
-    epics.map((epic) =>
-      epic(action$, state$),
-    ))
-  .pipe(mergeAll());
+  merge(...epics.map((epic) =>
+    epic(action$, state$),
+  ));
 
-export const createEpicKit = <S>(initialState: S, epics: Array<Epic<S>> = []): IEpicKit<S> => {
-  const queue: Array<IAction<S>> = [];
+export const createEpicKit = <S>(
+  initialState: S,
+  epic: Epic<S> = () => empty(),
+): IEpicKit<S> => {
+  const queue: Array<IAction<S, any>> = [];
   let subscribed: boolean = false;
   const state$ = new BehaviorSubject<S>(initialState);
-  const action$ = new Subject<IAction<S>>();
+  const action$ = new Subject<IAction<S, any>>();
 
-  const dispatch: DispatchFn<S> = (action) =>
+  const dispatch: DispatchFn<S> = <P>(
+    action: IAction<S, P>,
+  ) =>
     subscribed ? action$.next(action) : queue.push(action);
 
   const dispatchQueue = () => {
     subscribed = true;
-    queue.forEach(dispatch);
+    queue.forEach((a) => action$.next(a));
   };
 
   const epic$ = merge(
-    reduceState(state$, action$).pipe(
-      tap(([state]) => state$.next(state)),
+    reduceState(action$, state$).pipe(
+      tap(([, state]) => state$.next(state)),
     ),
-    connectEpics(state$, action$, epics).pipe(
+    epic(action$, state$).pipe(
       tap((action) => action$.next(action)),
       ignoreElements(),
     ),

@@ -35,5 +35,5 @@ jobs:
 
       - run:
           command: |
-            yarn coverage
+            yarn coverage-json
             yarn codecov

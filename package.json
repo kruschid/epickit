@@ -1,12 +1,14 @@
 {
   "name": "epickit",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "test": "TS_NODE_CACHE=false tape -r ts-node/register test/*.test.ts",
-    "coverage": "nyc --reporter=json -e .ts npm test"
+    "tape": "TS_NODE_CACHE=false tape -r ts-node/register",
+    "test": "npm run tape test/*.test.ts",
+    "coverage": "nyc -e .ts npm test",
+    "coverage-json": "nyc --reporter=json -e .ts npm test"
   },
   "repository": {
     "type": "git",
@@ -25,9 +27,9 @@
     "@types/tape": "^4.2.32",
     "codecov": "^3.5.0",
     "nyc": "^14.1.1",
-    "rxjs": "^6.3.3",
-    "tape": "^4.9.1",
-    "ts-node": "^7.0.1",
-    "typescript": "^3.4.5"
+    "rxjs": "^6.5.3",
+    "tape": "^4.11.0",
+    "ts-node": "^8.3.0",
+    "typescript": "^3.6.3"
   }
 }
