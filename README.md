@@ -1,9 +1,9 @@
 # epickit
 
-epickit is a state manager that utilises observable streams (rxjs) in order to facilitate state changes in context of async operations in your reactive application. It is meant to be used in your frontend, backend or any other type of applications (e.g. mobile apps, IoT-apps, edge agents, etc.).
-
 [![CircleCI](https://circleci.com/gh/kruschid/epickit/tree/master.svg?style=svg)](https://circleci.com/gh/kruschid/epickit/tree/master)
 [![codecov](https://codecov.io/gh/kruschid/react-epickit/branch/master/graph/badge.svg)](https://codecov.io/gh/kruschid/react-epickit)
+
+epickit is a state manager that utilises observable streams (rxjs) in order to facilitate state changes in context of async operations in your reactive application. It is meant to be used in your frontend, backend or any other type of applications (e.g. mobile apps, IoT-apps, edge agents, etc.).
 
 ## Introduction
 
@@ -145,7 +145,9 @@ Under the hood `filterAction` compares the reducers of two actions:
 
 ``` ts
 const a = { label: "", reducer: ((s) => s + 1), payload: undefined };
-const a = { label: "", reducer: ((s, p) => s + p), payload: undefined };
+const b = { label: "", reducer: ((s, p) => s + p), payload: undefined };
+
+const isEqual = a.reducer === b.reducer; // false
 ```
 
 So reusing the same reducer breaks reliability of `filterAction`:
@@ -165,7 +167,7 @@ const actionB = createAction(reducer); // using same redicer twice is not recomm
 
 ## Full Example
 
-The following fictive example contains of two actions `inc` that increments a counter and `add` which adds a number to the counter. Furthermore it defines an epic that reacts to these both actions in porder to perform a _debounced_ post request to an endpoint `/counter`. After a request has been finished the epic dispatches the action `log` for logging.   
+The following fictive example contains two actions `inc` that increments a counter and `add` which adds a number to the counter. Furthermore it defines an epic that reacts to these both actions in porder to perform a _debounced_ post request to an endpoint `/counter`. After a request has been finished the epic dispatches the action `log` for logging.   
 
 ``` ts
 
