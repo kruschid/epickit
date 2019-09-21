@@ -3,9 +3,10 @@ import { ignoreElements, map, share, tap, withLatestFrom, observeOn } from "rxjs
 import { IAction } from "./action";
 import { invokeReducer } from "./reducer";
 
-export type Epic<S> = (
+export type Epic<S, D = any> = (
   action$: Observable<IAction<S, any>>,
   state$: Observable<S>,
+  dependencies: D,
 ) => Observable<IAction<S, any>>;
 
 export type DispatchFn<S> = <P>(action: IAction<S, P>) => void;
@@ -29,19 +30,21 @@ export const reduceState = <S>(
     ),
   );
 
-export const combineEpics = <S>(
+export const combineEpics = <S, D = any>(
   ...epics: Array<Epic<S>>
-): Epic<S> => (
+): Epic<S, D> => (
   action$,
   state$,
+  dependencies,
 ): Observable<IAction<S>> =>
   merge(...epics.map((epic) =>
-    epic(action$, state$),
+    epic(action$, state$, dependencies),
   ));
 
-export const createEpicKit = <S>(
+export const createEpicKit = <S, D>(
   initialState: S,
   epic: Epic<S> = () => empty(),
+  dependencies?: D
 ): IEpicKit<S> => {
   const queue: Array<IAction<S, any>> = [];
   let subscribed: boolean = false;
@@ -62,7 +65,7 @@ export const createEpicKit = <S>(
     reduceState(action$, state$).pipe(
       tap(([, state]) => state$.next(state)),
     ),
-    epic(action$, state$).pipe(
+    epic(action$, state$, dependencies).pipe(
       tap((action) => action$.next(action)),
       ignoreElements(),
     ),

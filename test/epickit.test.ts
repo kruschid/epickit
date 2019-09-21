@@ -1,6 +1,6 @@
 import { take, toArray, tap, ignoreElements, mapTo } from "rxjs/operators";
 import * as test from "tape";
-import { of, asapScheduler } from "rxjs";
+import { of, asapScheduler, zip } from "rxjs";
 
 import { createEpicKit, Epic, combineEpics, reduceState} from "../src/epickit";
 import { createAction, filterAction, IAction } from "../src/action";
@@ -39,7 +39,11 @@ test("reduceState", (t) => {
 });
 
 test("combineEpics", (t) => {
-  t.plan(2);
+  t.plan(3);
+
+  const dependencies = {
+    effect: () => t.pass("should call sideeffect")
+  };
 
   const epicSpyA: Epic<IState> = (action$) =>
     action$.pipe(
@@ -55,20 +59,46 @@ test("combineEpics", (t) => {
       ignoreElements(),
     );
 
-  combineEpics<IState>(epicSpyA, epicSpyB)(
+  const epicSpyC: Epic<IState, typeof dependencies> = (
+    action$, _, {effect},
+  ) =>
+    zip(
+      action$.pipe(filterAction(add)),
+      action$.pipe(filterAction(inc)),
+    ).pipe(
+      tap(() => effect()),
+      ignoreElements(),
+    );
+
+  combineEpics<IState, typeof dependencies>(epicSpyA, epicSpyB, epicSpyC)(
     of(add(5), inc()),
-    of(initialState)
+    of(initialState),
+    dependencies,
   )
   .subscribe();
 });
 
 test("createEpicKit", (t) => {
-  t.plan(3);
+  t.plan(4);
 
   // initial state
   createEpicKit(initialState).state$.subscribe((state) =>
     t.deepEqual(state, initialState, "should emit initial state on subscribe"),
   );
+
+  // dependencies
+  const dependencies = {
+    effect: () => t.pass("should call sideeffect")
+  };
+  const epicSpy: Epic<IState, typeof dependencies> = (_, state$, {effect}) =>
+    state$.pipe(
+      tap(() => effect()),
+      ignoreElements(),
+    );
+
+  createEpicKit(initialState, epicSpy, dependencies)
+  .epic$
+  .subscribe();
 
   // queueing
   const expectedActions: Array<[IAction<IState, any>, IState]> = [
