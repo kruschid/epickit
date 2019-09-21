@@ -1,2 +1,2 @@
 export * from "./epickit";
-export * from "./filterAction";
+export * from "./action";
