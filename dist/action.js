@@ -13,20 +13,18 @@ exports.createAction = function () {
             : maybeReducer;
     var reducer = maybeReducer ? maybeReducer : (function (s, _) { return s; });
     var label = typeof maybeReducerOrLabel === "string" ? maybeReducerOrLabel : "";
-    return function () {
+    return Object.assign(function () {
         var _a = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             _a[_i] = arguments[_i];
         }
-        var payload = _a[0];
-        return ({
-            label: label, reducer: reducer, payload: payload,
-        });
-    };
+        var p = _a[0];
+        return ({ label: label, reducer: reducer, payload: p });
+    }, { reducer: reducer, label: label });
 };
 exports.filterAction = function (actionCreator) { return function (observable$) {
     return observable$.pipe(operators_1.filter(function (a) {
-        return a.reducer === actionCreator.apply(void 0, []).reducer;
+        return a.reducer === actionCreator.reducer;
     }), operators_1.map(function (a) { return a.payload; }));
 }; };
 //# sourceMappingURL=action.js.map

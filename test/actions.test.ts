@@ -4,12 +4,17 @@ import { Reducer } from "../src/reducer";
 import { of } from "rxjs";
 
 test("createAction", (t) => {
-  t.plan(3);
+  t.plan(4);
 
   const reducer: Reducer<string, string> = (s) => s.concat("abc");
-  const actionA = createAction<string, string>("actionA", reducer);
+  const actionCreator = createAction<string, string>("actionA", reducer);
   t.deepEqual(
-    actionA("123"),
+    [actionCreator.label, actionCreator.reducer],
+    ["actionA", reducer],
+    "action creator should have label and reducer reference",
+  );
+  t.deepEqual(
+    actionCreator("123"),
     {label: "actionA", reducer, payload: "123"},
     "should create action with reducer and payload",
   );
