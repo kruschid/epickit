@@ -9,5 +9,5 @@ export interface IEpicKit<S> {
     dispatch: DispatchFn<S>;
 }
 export declare const reduceState: <S>(action$: Observable<IAction<S, any>>, state$: Observable<S>) => Observable<[IAction<S, any>, S]>;
-export declare const combineEpics: <S, D = any>(...epics: Epic<S, any>[]) => Epic<S, D>;
+export declare const combineEpics: <S, D = any>(...epics: Epic<S, D>[]) => Epic<S, D>;
 export declare const createEpicKit: <S, D>(initialState: S, epic?: Epic<S, any>, dependencies?: D | undefined) => IEpicKit<S>;

@@ -31,7 +31,7 @@ export const reduceState = <S>(
   );
 
 export const combineEpics = <S, D = any>(
-  ...epics: Array<Epic<S>>
+  ...epics: Array<Epic<S, D>>
 ): Epic<S, D> => (
   action$,
   state$,
