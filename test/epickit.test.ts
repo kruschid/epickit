@@ -2,8 +2,8 @@ import { take, toArray, tap, ignoreElements, mapTo } from "rxjs/operators";
 import * as test from "tape";
 import { of, asapScheduler, zip } from "rxjs";
 
-import { createEpicKit, Epic, combineEpics, reduceState} from "../src/epickit";
-import { createAction, filterAction, IAction } from "../src/action";
+import { createEpicKit, Epic, combineEpics, reduceState, IActionResult} from "../src/epickit";
+import { createAction, filterAction } from "../src/action";
 
 interface IState {
   counter: number;
@@ -32,7 +32,7 @@ test("reduceState", (t) => {
   .subscribe((result) => {
     t.deepEqual(
       result,
-      [add(3), {counter: 4}],
+      {action: add(3), state: {counter: 4}},
       "should apply action on state",
     );
   });
@@ -101,10 +101,10 @@ test("createEpicKit", (t) => {
   .subscribe();
 
   // queueing
-  const expectedActions: Array<[IAction<IState, any>, IState]> = [
-    [inc(), {counter: 2}],
-    [inc(), {counter: 3}],
-    [add(7), {counter: 10}],
+  const expectedActions: IActionResult<IState>[] = [
+    {action: inc(), state: {counter: 2}},
+    {action: inc(), state: {counter: 3}},
+    {action: add(7), state: {counter: 10}},
   ];
   const {epic$, dispatch} = createEpicKit(initialState);
   dispatch(inc());
@@ -135,10 +135,10 @@ test("createEpicKit", (t) => {
     t.deepEqual(
       actions,
       [
-        [inc(), {counter: 2}],
-        [add(7), {counter: 9}],
-        [inc(), {counter: 10}],
-        [add(7), {counter: 17}],
+        { action: inc(), state: {counter: 2}},
+        { action: add(7), state: {counter: 9}},
+        { action: inc(), state: {counter: 10}},
+        { action: add(7), state: {counter: 17}},
       ],
       "actions should match expected action",
     ),

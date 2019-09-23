@@ -6,7 +6,10 @@ var reducer_1 = require("./reducer");
 exports.reduceState = function (action$, state$) {
     return action$.pipe(operators_1.observeOn(rxjs_1.queueScheduler), operators_1.withLatestFrom(state$), operators_1.map(function (_a) {
         var action = _a[0], state = _a[1];
-        return [action, reducer_1.invokeReducer(state, action.reducer, action.payload)];
+        return ({
+            action: action,
+            state: reducer_1.invokeReducer(state, action.reducer, action.payload),
+        });
     }));
 };
 exports.combineEpics = function () {
@@ -22,6 +25,7 @@ exports.combineEpics = function () {
 };
 exports.createEpicKit = function (initialState, epic, dependencies) {
     if (epic === void 0) { epic = function () { return rxjs_1.empty(); }; }
+    if (dependencies === void 0) { dependencies = {}; }
     var queue = [];
     var subscribed = false;
     var state$ = new rxjs_1.BehaviorSubject(initialState);
@@ -34,7 +38,7 @@ exports.createEpicKit = function (initialState, epic, dependencies) {
         queue.forEach(function (a) { return action$.next(a); });
     };
     var epic$ = rxjs_1.merge(exports.reduceState(action$, state$).pipe(operators_1.tap(function (_a) {
-        var state = _a[1];
+        var state = _a.state;
         return state$.next(state);
     })), epic(action$, state$, dependencies).pipe(operators_1.tap(function (action) { return action$.next(action); }), operators_1.ignoreElements()), rxjs_1.Observable.create(dispatchQueue))
         .pipe(operators_1.share());

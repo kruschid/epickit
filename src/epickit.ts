@@ -14,20 +14,26 @@ export type DispatchFn<S> = <P>(action: IAction<S, P>) => void;
 export interface IEpicKit<S> {
   state$: BehaviorSubject<S>;
   action$: Subject<IAction<S>>;
-  epic$: Observable<[IAction<S>, S]>;
+  epic$: Observable<IActionResult<S>>;
   dispatch: DispatchFn<S>;
+}
+
+export interface IActionResult<S, P = any> {
+  action: IAction<S, P>,
+  state: S,
 }
 
 export const reduceState = <S>(
   action$: Observable<IAction<S, any>>,
   state$: Observable<S>,
-): Observable<[IAction<S, any>, S]> =>
+): Observable<IActionResult<S>> =>
   action$.pipe(
     observeOn(queueScheduler),
     withLatestFrom(state$),
-    map(([action, state]) =>
-      [action, invokeReducer(state, action.reducer, action.payload)]
-    ),
+    map(([action, state]) => ({
+      action,
+      state:invokeReducer(state, action.reducer, action.payload),
+    })),
   );
 
 export const combineEpics = <S, D = any>(
@@ -43,8 +49,8 @@ export const combineEpics = <S, D = any>(
 
 export const createEpicKit = <S, D>(
   initialState: S,
-  epic: Epic<S> = () => empty(),
-  dependencies?: D
+  epic: Epic<S, D> = () => empty(),
+  dependencies: D = {} as D,
 ): IEpicKit<S> => {
   const queue: Array<IAction<S, any>> = [];
   let subscribed: boolean = false;
@@ -63,7 +69,7 @@ export const createEpicKit = <S, D>(
 
   const epic$ = merge(
     reduceState(action$, state$).pipe(
-      tap(([, state]) => state$.next(state)),
+      tap(({state}) => state$.next(state)),
     ),
     epic(action$, state$, dependencies).pipe(
       tap((action) => action$.next(action)),
