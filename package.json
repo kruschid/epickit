@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "npm run clean && tsc",
+    "build": "npm run test && npm run clean && tsc",
     "tape": "TS_NODE_CACHE=false tape -r ts-node/register",
     "test": "npm run tape test/*.test.ts",
     "coverage": "nyc -e .ts npm test",
